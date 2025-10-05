@@ -1,0 +1,30 @@
+{% extends "layout.html" %}
+
+{% block title %}他の開発サイト - 化学計算ツール{% endblock %}
+
+{% block content %}
+    <style>
+        .tool-section { 
+            border: 1px solid var(--border-color); 
+            border-radius: 8px; 
+            padding: 1.5em; 
+            background-color: var(--card-bg-color); 
+            line-height: 1.8;
+        }
+        .tool-section a {
+            color: var(--link-color);
+            font-weight: bold;
+        }
+        ul {
+            padding-left: 20px;
+        }
+    </style>
+
+    <h2 data-translate="othersites_title">他の開発サイト</h2>
+    <div class="tool-section">
+        <p data-translate="othersites_desc">このツールと合わせて使うと便利な、SI単位系の換算ツールも開発しています。</p>
+        <ul>
+            <li><a href="https://si-unit-converter.netlify.app" target="_blank" rel="noopener noreferrer">高性能SI単位系 換算ツール</a></li>
+        </ul>
+    </div>
+{% endblock %}

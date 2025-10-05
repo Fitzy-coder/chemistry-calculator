@@ -1,0 +1,80 @@
+{% extends "layout.html" %}
+
+{% block title %}サイトの使い方 - 化学計算ツール{% endblock %}
+
+{% block content %}
+    <style>
+        .tool-section { 
+            border: 1px solid var(--border-color); 
+            border-radius: 8px; 
+            padding: 1.5em; 
+            background-color: var(--card-bg-color); 
+            margin-bottom: 1.5em; 
+            line-height: 1.8;
+        }
+        .tool-section h3 {
+            border-bottom: 2px solid var(--link-color);
+            padding-bottom: 0.3em;
+            margin-top: 0;
+        }
+        .tool-section h4 {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.4em;
+            margin-top: 1.5em;
+        }
+        li {
+            margin-bottom: 1em;
+        }
+        code { 
+            background-color: rgba(100,100,100,0.1); 
+            padding: 2px 5px; 
+            border-radius: 4px; 
+            font-family: monospace;
+        }
+    </style>
+
+    <h2 data-translate="usage_title">サイトの使い方</h2>
+    
+    <div class="tool-section">
+        <h3 data-translate="usage_stoich_title">化学量論 計算ツール</h3>
+        <p data-translate="usage_stoich_desc">化学反応の試薬や生成物の量を計算します。順方向計算と逆方向計算の両方に対応しています。</p>
+        
+        <h4><span data-translate="usage_common_steps_title">基本操作</span></h4>
+        <ol>
+            <li data-translate="usage_stoich_step1"><b>物質名の入力:</b> 「反応物1」「反応物2」「生成物」の物質名を英語で入力します。（例: <code>water</code>, <code>ethanol</code>）</li>
+            <li data-translate="usage_stoich_step2"><b>分子量の取得:</b> 「分子量を取得 / 全再計算」ボタンを押すと、PubChemデータベースから分子量が自動で入力されます。</li>
+        </ol>
+
+        <h4><span data-translate="usage_forward_calc_title">順方向計算（反応物から生成物を計算）</span></h4>
+        <ul>
+            <li data-translate="usage_forward_solid"><b>固体の試薬:</b> 「質量(g)」の欄に、使用する量をグラム単位で入力します。</li>
+            <li data-translate="usage_forward_liquid"><b>液体の試薬:</b> 試薬瓶などで確認した「密度(g/mL)」と、メスシリンダーなどで測りとる「体積(mL)」を入力します。質量は自動で計算されます。</li>
+            <li data-translate="usage_forward_result">入力すると、物質量(mol)、どちらの試薬が先に尽きるか（律速段階）、そして最大で得られる生成物の量（理論収量）がリアルタイムで自動計算されます。</li>
+        </ul>
+
+        <h4><span data-translate="usage_backward_calc_title">逆方向計算（目標の生成物から反応物を計算）</span></h4>
+        <ul>
+            <li data-translate="usage_backward_step1">まず、上記の基本操作に従い、3つの物質の分子量を先に取得してください。</li>
+            <li data-translate="usage_backward_step2">目標とする生成物の量を「理論収量(g)」の欄に入力します。</li>
+            <li data-translate="usage_backward_result">入力すると、その量の生成物を得るのに必要な「反応物1」と「反応物2」の量が自動で逆算され、それぞれの質量(g)や体積(mL)の欄に表示されます。</li>
+        </ul>
+    </div>
+
+    <div class="tool-section">
+        <h3 data-translate="usage_molarity_title">溶液調製 計算ツール</h3>
+        <p data-translate="usage_molarity_desc">指定したモル濃度(mol/L)と体積(mL)の溶液を調製するのに必要な、溶質の質量(g)を計算します。</p>
+        <ol>
+            <li data-translate="usage_molarity_step1"><b>各項目入力:</b> 「物質名」「目標モル濃度」「目標体積」を入力します。</li>
+            <li data-translate="usage_molarity_step2"><b>計算実行:</b> 「計算」ボタンを押すかEnterキーを押すと、PubChemから分子量を取得し、「必要な質量(g)」を計算して表示します。</li>
+        </ol>
+    </div>
+
+    <div class="tool-section">
+        <h3 data-translate="usage_safety_title">安全性サポート機能</h3>
+        <p data-translate="usage_safety_desc">計算と同時に、実験の安全性を高めるための情報を提供します。</p>
+        <ul>
+            <li data-translate="usage_safety_hazard">🔥 <b>危険物警告:</b> 硫酸や金属ナトリウムなど、特に危険性が高い試薬名を入力すると、注意を促す炎のアイコンが自動で表示されます。</li>
+            <li data-translate="usage_safety_sds">🔗 <b>SDSリンク:</b> 物質名を入力すると、その物質の安全データシート(SDS)をGoogle検索するためのリンクアイコンが自動で生成されます。クリックすると、危険性や応急処置などをすぐに確認できます。</li>
+        </ul>
+    </div>
+{% endblock %}

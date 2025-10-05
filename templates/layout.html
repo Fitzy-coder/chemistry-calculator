@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="化学実験に必須の化学量論計算（律速段階、理論収量、収率）、溶液調製（モル計算）を自動化する高機能なウェブツール。英語対応。">
+    <title>{% block title %}化学計算ツール | 律速段階・理論収量・溶液調製{% endblock %}</title>
+    <style>
+        :root {
+            --bg-color: #f4f7f9; --text-color: #212529; --card-bg-color: #fff;
+            --border-color: #ddd; --header-bg-color: #fff; --link-color: #007bff;
+        }
+        body.dark-mode {
+            --bg-color: #1a1a1a; --text-color: #e0e0e0; --card-bg-color: #2c2c2c;
+            --border-color: #444; --header-bg-color: #2c2c2c; --link-color: #90caf9;
+        }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 0; background-color: var(--bg-color); color: var(--text-color); transition: background-color 0.2s, color 0.2s; }
+        .header { background-color: var(--header-bg-color); padding: 10px 20px; display: flex; align-items: center; border-bottom: 1px solid var(--border-color); position: fixed; top: 0; width: 100%; box-sizing: border-box; z-index: 1000; }
+        .header h1 { margin: 0 0 0 10px; font-size: 1.2em; white-space: nowrap; }
+        .header h1 a { text-decoration: none; color: inherit; }
+        .hamburger { cursor: pointer; background: none; border: none; padding: 5px; z-index: 1002; display: none; }
+        .hamburger span { display: block; width: 25px; height: 3px; margin: 5px; background-color: var(--text-color); }
+        .sidebar { height: 100%; width: 250px; position: fixed; z-index: 900; top: 0; left: 0; background-color: var(--card-bg-color); overflow-x: hidden; transition: 0.3s; padding-top: 80px; border-right: 1px solid var(--border-color); }
+        .sidebar a { padding: 10px 15px; text-decoration: none; font-size: 18px; color: var(--link-color); display: block; }
+        .sidebar a:hover { background-color: rgba(100,100,100,0.1); }
+        .main-content-wrapper { transition: margin-left .3s; padding-top: 60px; margin-left: 250px; }
+        .main-content { padding: 2em; max-width: 900px; margin: 0 auto; }
+        .controls { margin-left: auto; display: flex; align-items: center; gap: 15px; }
+        .lang-switcher button { background: none; border: 1px solid var(--border-color); color: var(--text-color); padding: 5px 10px; cursor: pointer; border-radius: 4px; }
+        .lang-switcher button.active { background-color: var(--link-color); color: white; border-color: var(--link-color); }
+        .dark-mode-toggle { display: flex; align-items: center; gap: 10px; }
+        .switch { position: relative; display: inline-block; width: 50px; height: 24px; }
+        .switch input { display: none; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--link-color); }
+        input:checked + .slider:before { transform: translateX(26px); }
+        footer { text-align: center; padding: 20px; margin-top: 40px; font-size: 0.9em; color: #888; border-top: 1px solid var(--border-color); }
+        h2 { border-bottom: 3px solid var(--link-color); padding-bottom: 0.4em; }
+        
+        /* スマートフォン用のレイアウト調整 */
+        @media (max-width: 768px) {
+            .hamburger { display: block; }
+            .sidebar { width: 0; }
+            .sidebar.active { width: 250px; }
+            .main-content-wrapper { margin-left: 0; }
+            .header h1 { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div id="sidebar" class="sidebar">
+        <a href="/" data-translate="nav_home">ホーム</a>
+        <a href="/usage" data-translate="nav_usage">サイトの使い方</a>
+        <a href="/developer" data-translate="nav_developer">開発者から</a>
+        <a href="/privacy" data-translate="nav_privacy">プライバシーポリシー</a>
+        <a href="/other_sites" data-translate="nav_other_sites">他の開発サイト</a>
+    </div>
+    <div id="main-content-wrapper" class="content-pusher">
+        <header class="header">
+            <button class="hamburger" onclick="toggleNav()"><span></span><span></span><span></span></button>
+            <h1><a href="/" data-translate="site_title_header">化学計算ツール</a></h1>
+            <div class="controls">
+                <div class="lang-switcher"><button id="lang-ja">JP</button><button id="lang-en">EN</button></div>
+                <div class="dark-mode-toggle"><span>🌙</span><label class="switch"><input type="checkbox" id="dark-mode-checkbox"><span class="slider"></span></label></div>
+            </div>
+        </header>
+        <main class="main-content">
+            {% block content %}{% endblock %}
+        </main>
+        <footer data-translate="footer_copyright">&copy; 2025 Fitzy. All Rights Reserved.</footer>
+    </div>
+
+    <script>
+        const translations = {
+            en: {
+                site_title_header: "Chemistry Calculator",
+                nav_home: "Home",
+                nav_usage: "How to Use",
+                nav_developer: "From Developer",
+                nav_privacy: "Privacy Policy",
+                nav_other_sites: "Other Sites",
+                footer_copyright: "© 2025 Fitzy. All Rights Reserved."
+            }
+        };
+
+        function setLanguage(lang) {
+            document.documentElement.lang = lang;
+            document.querySelectorAll('[data-translate]').forEach(el => {
+                const key = el.getAttribute('data-translate');
+                if (!el.hasAttribute('data-ja-default')) {
+                    el.setAttribute('data-ja-default', el.innerHTML);
+                }
+                if (lang === 'en' && translations.en[key]) {
+                    el.innerHTML = translations.en[key];
+                } else {
+                    el.innerHTML = el.getAttribute('data-ja-default');
+                }
+            });
+            document.getElementById('lang-ja').classList.toggle('active', lang === 'ja');
+            document.getElementById('lang-en').classList.toggle('active', lang === 'en');
+            localStorage.setItem('language', lang);
+        }
+
+        function toggleNav() {
+            document.getElementById("sidebar").classList.toggle('active');
+        }
+
+        document.getElementById('lang-ja').addEventListener('click', () => setLanguage('ja'));
+        document.getElementById('lang-en').addEventListener('click', () => setLanguage('en'));
+        
+        const darkModeCheckbox = document.getElementById('dark-mode-checkbox');
+        const body = document.body;
+        if (localStorage.getItem('darkMode') === 'enabled') { body.classList.add('dark-mode'); darkModeCheckbox.checked = true; }
+        darkModeCheckbox.addEventListener('change', () => {
+            if (darkModeCheckbox.checked) {
+                body.classList.add('dark-mode');
+                localStorage.setItem('darkMode', 'enabled');
+            } else {
+                body.classList.remove('dark-mode');
+                localStorage.setItem('darkMode', 'disabled');
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedLang = localStorage.getItem('language');
+            const browserLang = navigator.language.split('-')[0];
+            const lang = savedLang || (browserLang === 'ja' ? 'ja' : 'en');
+            setLanguage(lang);
+        });
+    </script>
+    {% block page_scripts %}{% endblock %}
+</body>
+</html>

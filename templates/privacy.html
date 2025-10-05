@@ -1,0 +1,44 @@
+{% extends "layout.html" %}
+
+{% block title %}プライバシーポリシー - 化学計算ツール{% endblock %}
+
+{% block content %}
+    <style>
+        .tool-section { 
+            border: 1px solid var(--border-color); 
+            border-radius: 8px; 
+            padding: 1.5em; 
+            background-color: var(--card-bg-color); 
+            line-height: 1.8;
+        }
+        .tool-section h4 {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.4em;
+            margin-top: 1.5em;
+        }
+        .tool-section a {
+            color: var(--link-color);
+        }
+    </style>
+
+    <h2 data-translate="privacy_title">プライバシーポリシー</h2>
+    <div class="tool-section">
+        <p data-translate="privacy_date">制定日：2025年10月5日</p>
+        <p data-translate="privacy_intro">運営者（以下、「当運営者」といいます。）は、当サイト「化学計算ツール」（以下、「当サイト」といいます。）の利用者（以下、「ユーザー」といいます。）のプライバシーを尊重し、個人情報の保護に努めます。</p>
+        
+        <h4 data-translate="privacy_ads_title">広告配信について</h4>
+        <p data-translate="privacy_ads_desc">当サイトは、第三者配信の広告サービス「Google AdSense（グーグルアドセンス）」を利用しています。 Googleなどの広告配信事業者は、ユーザーの興味に応じた商品やサービスの広告を表示するため、当サイトや他サイトへのアクセスに関する情報「Cookie（クッキー）」(氏名、住所、メールアドレス、電話番号は含まれません) を使用することがあります。 またGoogle AdSenseに関して、このプロセスの詳細やこのような情報が広告配信事業者に使用されないようにする方法については、<a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener noreferrer">こちら</a>をクリックしてください。</p>
+        
+        <h4 data-translate="privacy_analytics_title">アクセス解析ツールについて</h4>
+        <p data-translate="privacy_analytics_desc">当サイトでは、Googleによるアクセス解析ツール「Google Analytics（グーグルアナリティクス）」を利用しています。 このGoogle Analyticsはトラフィックデータの収集のためにCookieを使用しています。このトラフィックデータは匿名で収集されており、個人を特定するものではありません。この機能はCookieを無効にすることで収集を拒否することが出来ますので、お使いのブラウザの設定をご確認ください。</p>
+        
+        <h4 data-translate="privacy_disclaimer_title">免責事項</h4>
+        <p data-translate="privacy_disclaimer_desc">当サイトで提供するツールや情報の正確性については万全を期しておりますが、その内容を保証するものではありません。当サイトの利用によって生じたいかなる損害についても、当運営者は一切の責任を負いかねますのでご了承ください。当サイトからリンクやバナーなどによって他のサイトに移動された場合、移動先サイトで提供される情報、サービス等について一切の責任を負いません。</p>
+        
+        <h4 data-translate="privacy_copyright_title">著作権について</h4>
+        <p data-translate="privacy_copyright_desc">当サイトに掲載されている情報についての著作権は放棄しておりません。当サイトの記事からの引用に関しましては「引用元の明記」によって無償で引用頂けます。ただし、全文転載はお断りいたしております。</p>
+        
+        <h4 data-translate="privacy_admin_title">運営者情報</h4>
+        <p><b><span data-translate="privacy_admin_name">運営者</span>:</b> Fitzy<br><b><span data-translate="privacy_admin_contact">連絡先</span>:</b> fmierdevelop@gmail.com</p>
+    </div>
+{% endblock %}

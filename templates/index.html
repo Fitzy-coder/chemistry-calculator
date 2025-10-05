@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="化学実験に必須の化学量論計算（律速段階、理論収量、収率）、溶液調製（モル計算）を自動化する高機能なウェブツール。英語対応。">
+    <title>化学計算ツール | 律速段階・理論収量・溶液調製を自動計算</title>
+    <style>
+        :root {
+            --bg-color: #f4f7f9; --text-color: #212529; --card-bg-color: #fff;
+            --border-color: #ddd; --header-bg-color: #fff; --link-color: #007bff;
+        }
+        body.dark-mode {
+            --bg-color: #1a1a1a; --text-color: #e0e0e0; --card-bg-color: #2c2c2c;
+            --border-color: #444; --header-bg-color: #2c2c2c; --link-color: #90caf9;
+        }
+        html { scroll-behavior: smooth; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 0; background-color: var(--bg-color); color: var(--text-color); transition: background-color 0.2s, color 0.2s; }
+        .header { background-color: var(--header-bg-color); padding: 10px 20px; display: flex; align-items: center; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; width: 100%; box-sizing: border-box; z-index: 1000; }
+        .header h1 { margin: 0 0 0 10px; font-size: 1.2em; white-space: nowrap; }
+        .header h1 a { text-decoration: none; color: inherit; }
+        .hamburger { cursor: pointer; background: none; border: none; padding: 5px; z-index: 1002; }
+        .hamburger span { display: block; width: 25px; height: 3px; margin: 5px; background-color: var(--text-color); }
+        .sidebar { height: 100%; width: 0; position: fixed; z-index: 1001; top: 0; left: 0; background-color: var(--card-bg-color); overflow-x: hidden; transition: 0.3s; padding-top: 80px; border-right: 1px solid var(--border-color); }
+        .sidebar.active { width: 250px; }
+        .sidebar a { padding: 10px 15px; text-decoration: none; font-size: 18px; color: var(--link-color); display: block; }
+        .sidebar a:hover { background-color: rgba(100,100,100,0.1); }
+        .main-content-wrapper { transition: margin-left .3s; padding-top: 60px; }
+        .main-content { padding: 2em; max-width: 900px; margin: 0 auto; }
+        .controls { margin-left: auto; display: flex; align-items: center; gap: 15px; }
+        .lang-switcher button { background: none; border: 1px solid var(--border-color); color: var(--text-color); padding: 5px 10px; cursor: pointer; border-radius: 4px; }
+        .lang-switcher button.active { background-color: var(--link-color); color: white; border-color: var(--link-color); }
+        .dark-mode-toggle { display: flex; align-items: center; gap: 10px; }
+        .switch { position: relative; display: inline-block; width: 50px; height: 24px; }
+        .switch input { display: none; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--link-color); }
+        input:checked + .slider:before { transform: translateX(26px); }
+        footer { text-align: center; padding: 20px; margin-top: 40px; font-size: 0.9em; color: #888; border-top: 1px solid var(--border-color); }
+        h2 { border-bottom: 3px solid var(--link-color); padding-bottom: 0.4em; }
+        .page-section { display: none; }
+        .page-section.active { display: block; }
+        @media (max-width: 768px) { .header h1 { display: none; } }
+        .tool-section { border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5em; background-color: var(--card-bg-color); margin-bottom: 1.5em; }
+        h3 { border-bottom: 2px solid var(--link-color); padding-bottom: 0.3em; margin-top: 0; }
+        input { background-color: var(--bg-color); color: var(--text-color); border: 1px solid var(--border-color);}
+        .calc-section { margin-bottom: 1em; border-bottom: 1px solid var(--border-color); padding-bottom: 1em; }
+        .calc-section:last-child { border-bottom: none; }
+        .calc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 1em; align-items: flex-end; }
+        .grid-item-wide { grid-column: 1 / -1; }
+        .result-box { padding: 0.8em; border: 1px solid var(--border-color); border-radius: 4px; background-color: var(--bg-color); min-height: 41px; font-size: 0.9em; }
+        .limiting-reagent { background-color: #ffaaaa40; border-color: #ffaaaa; }
+        .icon-link { color: var(--text-color); font-size: 1.2em; margin-left: 8px; text-decoration: none; }
+        #calculation-summary { font-weight: bold; color: #d9534f; text-align: left; }
+        .clear-button { background-color: #6c757d; }
+        .clear-button:hover { background-color: #5a6268; }
+    </style>
+</head>
+<body>
+    <div id="sidebar" class="sidebar">
+        <a href="#home" class="nav-link" data-translate="nav_home">ホーム</a>
+        <a href="#usage" class="nav-link" data-translate="nav_usage">サイトの使い方</a>
+        <a href="#developer" class="nav-link" data-translate="nav_developer">開発者から</a>
+        <a href="#privacy" class="nav-link" data-translate="nav_privacy">プライバシーポリシー</a>
+        <a href="#other_sites" class="nav-link" data-translate="nav_other_sites">他の開発サイト</a>
+    </div>
+    <div id="main-content-wrapper" class="main-content-wrapper">
+        <header class="header">
+            <button class="hamburger" onclick="toggleNav()"><span></span><span></span><span></span></button>
+            <h1><a href="#home" data-translate="site_title_header">化学計算ツール</a></h1>
+            <div class="controls">
+                <div class="lang-switcher"><button id="lang-ja">JP</button><button id="lang-en">EN</button></div>
+                <div class="dark-mode-toggle"><span>🌙</span><label class="switch"><input type="checkbox" id="dark-mode-checkbox"><span class="slider"></span></label></div>
+            </div>
+        </header>
+        <main class="main-content">
+            <div id="home" class="page-section active">
+                <h2 data-translate="home_title">計算ツール</h2>
+                <div class="tool-section" onkeydown="handleEnter(event)">
+                    <h3 data-translate="stoichiometry_title">化学量論 計算ツール</h3>
+                    <div class="calc-section"><h4><span data-translate="reactant_1">反応物 1</span></h4><div class="calc-grid"><div class="grid-item-wide"><label for="r1-name" data-translate="substance_name">物質名:</label><div style="display:flex; align-items: center;"><input type="text" id="r1-name" onblur="checkHazardAndSds(this.value, 'r1-hazard', 'r1-sds')"><span id="r1-hazard" class="icon-link"></span><a id="r1-sds" class="icon-link" href="#" target="_blank"></a></div></div><div class="grid-item"><label data-translate="mw">分子量 (g/mol):</label><div id="r1-mw" class="result-box"></div></div><div class="grid-item"><label for="r1-density" data-translate="density">密度 (g/mL):</label><input type="number" id="r1-density" oninput="updateCalculations('density', 1)"></div><div class="grid-item"><label for="r1-vol" data-translate="volume">体積 (mL):</label><input type="number" id="r1-vol" oninput="updateCalculations('vol', 1)"></div><div class="grid-item"><label for="r1-mass" data-translate="mass">質量 (g):</label><input type="number" id="r1-mass" oninput="updateCalculations('mass', 1)"></div><div class="grid-item"><label data-translate="moles">物質量 (mol):</label><div id="r1-moles" class="result-box"></div></div></div></div>
+                    <div class="calc-section"><h4><span data-translate="reactant_2">反応物 2</span></h4><div class="calc-grid"><div class="grid-item-wide"><label for="r2-name" data-translate="substance_name">物質名:</label><div style="display:flex; align-items: center;"><input type="text" id="r2-name" onblur="checkHazardAndSds(this.value, 'r2-hazard', 'r2-sds')"><span id="r2-hazard" class="icon-link"></span><a id="r2-sds" class="icon-link" href="#" target="_blank"></a></div></div><div class="grid-item"><label data-translate="mw">分子量 (g/mol):</label><div id="r2-mw" class="result-box"></div></div><div class="grid-item"><label for="r2-density" data-translate="density">密度 (g/mL):</label><input type="number" id="r2-density" oninput="updateCalculations('density', 2)"></div><div class="grid-item"><label for="r2-vol" data-translate="volume">体積 (mL):</label><input type="number" id="r2-vol" oninput="updateCalculations('vol', 2)"></div><div class="grid-item"><label for="r2-mass" data-translate="mass">質量 (g):</label><input type="number" id="r2-mass" oninput="updateCalculations('mass', 2)"></div><div class="grid-item"><label data-translate="moles">物質量 (mol):</label><div id="r2-moles" class="result-box"></div></div></div></div>
+                    <div class="calc-section"><h4><span data-translate="product">生成物</span></h4><div class="calc-grid"><div class="grid-item-wide"><label for="p-name" data-translate="substance_name">物質名:</label><input type="text" id="p-name"></div><div class="grid-item"><label data-translate="mw">分子量 (g/mol):</label><div id="p-mw" class="result-box"></div></div><div class="grid-item"><label for="p-yield" data-translate="theoretical_yield">理論収量 (g):</label><input type="number" id="p-yield" oninput="backCalculate()"></div><div class="grid-item"><label for="p-actual" data-translate="actual_yield">実収量 (g):</label><input type="number" id="p-actual" oninput="updateCalculations()"></div><div class="grid-item"><label data-translate="yield_percent">収率 (%):</label><div id="p-percentage" class="result-box"></div></div></div></div>
+                    <div id="calculation-summary" class="result-box" style="margin-top:1em;"></div>
+                    <div style="margin-top:1em; display:flex; gap: 1em;">
+                        <button type="button" onclick="fetchAllData()" style="flex-grow: 1;" data-translate="get_mw_button">分子量を取得 / 全再計算</button>
+                        <button type="button" onclick="clearStoichiometryFields()" class="clear-button" data-translate="clear_button">クリア</button>
+                    </div>
+                </div>
+                <div class="tool-section" onkeydown="handleEnter(event, 'molarity')">
+                    <h3 data-translate="molarity_title">溶液調製 計算ツール</h3>
+                    <div class="calc-grid">
+                        <div class="grid-item-wide"><label for="m-name" data-translate="substance_name">物質名:</label><div style="display:flex; align-items: center;"><input type="text" id="m-name" onblur="checkHazardAndSds(this.value, 'm-hazard', 'm-sds')"><span id="m-hazard" class="icon-link"></span><a id="m-sds" class="icon-link" href="#" target="_blank"></a></div></div>
+                        <div class="grid-item"><label for="m-molarity" data-translate="target_molarity">目標モル濃度 (mol/L):</label><input type="number" id="m-molarity"></div>
+                        <div class="grid-item"><label for="m-volume" data-translate="target_volume">目標体積 (mL):</label><input type="number" id="m-volume"></div>
+                        <div class="grid-item"><label data-translate="required_mass">必要な質量 (g):</label><div id="m-mass" class="result-box"></div></div>
+                    </div>
+                    <div style="margin-top:1em; display:flex; gap: 1em;">
+                        <button type="button" onclick="calculateMolarity()" style="flex-grow: 1;" data-translate="calculate_button">計算</button>
+                        <button type="button" onclick="clearMolarityFields()" class="clear-button" data-translate="clear_button">クリア</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="usage" class="page-section">
+                <h2 data-translate="usage_title">サイトの使い方</h2>
+                <div class="tool-section">
+                    <h4 data-translate="usage_stoich_title">化学量論 計算ツール</h4>
+                    <p data-translate="usage_stoich_desc">化学反応の試薬や生成物の量を計算します。順方向計算と逆方向計算の両方に対応しています。</p>
+                    <ol>
+                        <li data-translate="usage_stoich_step1"><b>物質名の入力:</b> 「反応物」「生成物」の物質名を英語で入力します。（例: <code>water</code>, <code>ethanol</code>）</li>
+                        <li data-translate="usage_stoich_step2"><b>分子量の取得:</b> 「分子量を取得 / 全再計算」ボタンを押すと分子量が自動入力されます。</li>
+                        <li data-translate="usage_forward_calc_title"><b>順方向計算:</b> 固体の場合は「質量(g)」を、液体の場合は試薬ラベル等で調べた「密度(g/mL)」と使用する「体積(mL)」を入力すると、モル数、律速段階、理論収量が自動計算されます。</li>
+                        <li data-translate="usage_backward_calc_title"><b>逆方向計算:</b> 分子量取得後、目標の「理論収量(g)」を入力すると、必要な反応物の量が逆算されます。</li>
+                    </ol>
+                </div>
+                <div class="tool-section">
+                    <h4 data-translate="usage_molarity_title">溶液調製 計算ツール</h4>
+                    <p data-translate="usage_molarity_desc">指定濃度の溶液調製に必要な溶質の質量を計算します。</p>
+                    <ol>
+                        <li data-translate="usage_molarity_step1"><b>各項目入力:</b> 「物質名」「目標モル濃度(mol/L)」「目標体積(mL)」を入力します。</li>
+                        <li data-translate="usage_molarity_step2"><b>計算実行:</b> 「計算」ボタンで「必要な質量(g)」を計算します。</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div id="developer" class="page-section">
+                <h2 data-translate="dev_title">開発者から</h2>
+                <div class="tool-section">
+                    <p data-translate="dev_intro">この化学計算ツールをご利用いただき、誠にありがとうございます。開発者のFitzyです。私自身、学生時代の化学実験での煩雑な計算を少しでも楽にしたい、という思いからこのツールを開発しました。</p>
+                    <h4 data-translate="dev_server_title">サイトの動作について</h4>
+                    <p data-translate="dev_server_desc">当サイトは「Render」の無料プランで運営されています。そのため、約15分間アクセスがない場合サーバーがスリープします。スリープからの復帰時はページの表示に10〜30秒ほどかかる場合がありますが、故障ではありませんのでご安心ください。</p>
+                    <h4 data-translate="dev_contact_title">ご意見・ご報告のお願い</h4>
+                    <p data-translate="dev_contact_desc">「こんな機能が欲しい」「ここが使いにくい」といったご意見や、計算結果がおかしいなどの不具合報告は、開発の大きな助けとなります。もし何かお気づきの点がありましたら、ぜひ下記メールアドレスまでお気軽にご連絡ください。</p>
+                    <p><b>E-mail:</b> fmierdevelop@gmail.com</p>
+                </div>
+            </div>
+
+            <div id="privacy" class="page-section">
+                <h2 data-translate="privacy_title">プライバシーポリシー</h2>
+                <div class="tool-section">
+                    <p data-translate="privacy_date">制定日：2025年10月5日</p>
+                    <p data-translate="privacy_intro">運営者（以下、「当運営者」といいます。）は、当サイト「化学計算ツール」（以下、「当サイト」といいます。）の利用者（以下、「ユーザー」といいます。）のプライバシーを尊重し、個人情報の保護に努めます。</p>
+                    <h4 data-translate="privacy_ads_title">広告配信について</h4>
+                    <p data-translate="privacy_ads_desc">当サイトは、第三者配信の広告サービス「Google AdSense（グーグルアドセンス）」を利用しています。 Googleなどの広告配信事業者は、ユーザーの興味に応じた商品やサービスの広告を表示するため、当サイトや他サイトへのアクセスに関する情報「Cookie（クッキー）」(氏名、住所、メールアドレス、電話番号は含まれません) を使用することがあります。 またGoogle AdSenseに関して、このプロセスの詳細やこのような情報が広告配信事業者に使用されないようにする方法については、<a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener noreferrer" style="color: var(--link-color);">こちら</a>をクリックしてください。</p>
+                    <h4 data-translate="privacy_analytics_title">アクセス解析ツールについて</h4>
+                    <p data-translate="privacy_analytics_desc">当サイトでは、Googleによるアクセス解析ツール「Google Analytics（グーグルアナリティクス）」を利用しています。 このGoogle Analyticsはトラフィックデータの収集のためにCookieを使用しています。このトラフィックデータは匿名で収集されており、個人を特定するものではありません。この機能はCookieを無効にすることで収集を拒否することが出来ますので、お使いのブラウザの設定をご確認ください。</p>
+                    <h4 data-translate="privacy_disclaimer_title">免責事項</h4>
+                    <p data-translate="privacy_disclaimer_desc">当サイトで提供するツールや情報の正確性については万全を期しておりますが、その内容を保証するものではありません。当サイトの利用によって生じたいかなる損害についても、当運営者は一切の責任を負いかねますのでご了承ください。当サイトからリンクやバナーなどによって他のサイトに移動された場合、移動先サイトで提供される情報、サービス等について一切の責任を負いません。</p>
+                    <h4 data-translate="privacy_copyright_title">著作権について</h4>
+                    <p data-translate="privacy_copyright_desc">当サイトに掲載されている情報についての著作権は放棄しておりません。当サイトの記事からの引用に関しましては「引用元の明記」によって無償で引用頂けます。ただし、全文転載はお断りいたしております。</p>
+                    <h4 data-translate="privacy_admin_title">運営者情報</h4>
+                    <p><b><span data-translate="privacy_admin_name">運営者</span>:</b> Fitzy<br><b><span data-translate="privacy_admin_contact">連絡先</span>:</b> fmierdevelop@gmail.com</p>
+                </div>
+            </div>
+            
+            <div id="other_sites" class="page-section">
+                <h2 data-translate="othersites_title">他の開発サイト</h2>
+                <div class="tool-section">
+                    <p data-translate="othersites_desc">このツールと合わせて使うと便利な、SI単位系の換算ツールも開発しています。</p>
+                    <ul><li><a href="https://si-unit-converter.netlify.app" target="_blank" rel="noopener noreferrer" style="color: var(--link-color);">高性能SI単位系 換算ツール</a></li></ul>
+                </div>
+            </div>
+        </main>
+        <footer data-translate="footer_copyright">&copy; 2025 Fitzy. All Rights Reserved.</footer>
+    </div>
+
+    <script>
+        const translations = {
+            en: {
+                site_title_header: "Chemistry Calculator", nav_home: "Home", nav_usage: "How to Use", nav_developer: "From Developer", nav_privacy: "Privacy Policy", nav_other_sites: "Other Sites", home_title: "Calculators", stoichiometry_title: "Stoichiometry Calculator", reactant_1: "Reactant 1", reactant_2: "Reactant 2", product: "Product", substance_name: "Substance Name:", mw: "MW (g/mol):", density: "Density (g/mL):", volume: "Volume (mL):", mass: "Mass (g):", moles: "Amount (mol):", theoretical_yield: "Theoretical Yield (g):", actual_yield: "Actual Yield (g):", yield_percent: "Yield (%):", get_mw_button: "Get MW / Recalculate All", clear_button: "Clear", molarity_title: "Molarity Calculator", target_molarity: "Target Molarity (mol/L):", target_volume: "Target Volume (mL):", required_mass: "Required Mass (g):", calculate_button: "Calculate", usage_title: "How to Use", usage_intro: "This website provides tools to automate frequent calculations in chemical experiments and to support safety.", usage_stoich_title: "Stoichiometry Calculator", usage_stoich_desc: "Calculates the amounts of reagents required for a reaction and the amounts of products obtained. It supports both forward and backward calculations.", usage_common_steps_title: "Basic Operations", usage_stoich_step1: "<b>Enter Substance Names:</b> Enter the names of 'Reactant 1', 'Reactant 2', and 'Product' in English (e.g., <code>water</code>, <code>ethanol</code>).", usage_stoich_step2: "<b>Get Molecular Weights:</b> Click the 'Get MW / Recalculate All' button to automatically fetch molecular weights from the PubChem database.", usage_forward_calc_title: "<b>Forward Calculation:</b> For solids, enter the 'Mass (g)'. For liquids, enter the 'Density (g/mL)' and 'Volume (mL)'. Moles, limiting reagent, and theoretical yield are calculated in real-time.", usage_backward_calc_title: "<b>Backward Calculation:</b> After fetching MWs, enter your target 'Theoretical Yield (g)' to calculate the required reactant amounts.", usage_molarity_title: "Molarity Calculator", usage_molarity_desc: "Calculates the mass of solute required to prepare a solution of a specified concentration.", usage_molarity_step1: "<b>Enter Details:</b> Input the 'Substance Name', 'Target Molarity (mol/L)', and 'Target Volume (mL)'.", usage_molarity_step2: "<b>Execute Calculation:</b> Click the 'Calculate' button to fetch the molecular weight and calculate the 'Required Mass (g)'.", dev_title: "From the Developer", dev_intro: "Thank you for using this Chemistry Calculator. I'm Fitzy, the developer. I created this tool to alleviate the tedious calculations I experienced during my own chemistry experiments as a student.", dev_server_title: "About Site Performance", dev_server_desc: "This site is hosted on Render's free plan. Therefore, the server may go to sleep after about 15 minutes of inactivity. When this happens, it might take 10-30 seconds for the page to load upon your next visit. This is a feature of the free plan and not a malfunction.", dev_contact_title: "Feedback & Bug Reports", dev_contact_desc: "Your feedback, such as 'I want this feature' or 'This part is difficult to use,' and bug reports are invaluable for development. If you notice anything, please feel free to contact me at the email address below.", privacy_title: "Privacy Policy", privacy_date: "Effective Date: October 5, 2025", privacy_intro: "The operator ('the Operator') of the 'Chemistry Calculator' website ('the Site') respects the privacy of its users ('Users') and is committed to protecting their personal information.", privacy_ads_title: "Advertising", privacy_ads_desc: "The Site uses Google AdSense, a third-party advertising service. Advertising distributors such as Google may use 'Cookies' to display advertisements tailored to User interests. For more details on this process and how to opt-out, please click <a href='https://policies.google.com/technologies/ads' target='_blank' rel='noopener noreferrer' style='color: var(--link-color);'>here</a>.", privacy_analytics_title: "Access Analysis Tools", privacy_analytics_desc: "The Site uses Google Analytics. This tool uses Cookies to collect anonymous traffic data. You can refuse this collection by disabling Cookies in your browser settings.", privacy_disclaimer_title: "Disclaimer", privacy_disclaimer_desc: "While every effort is made to ensure the accuracy of the tools and information provided on the Site, we do not guarantee their contents. The Operator shall not be liable for any damages arising from the use of the Site. We are not responsible for the information and services provided on other sites accessed via links from this site.", privacy_copyright_title: "Copyright", privacy_copyright_desc: "The copyright for the information on the Site is not waived. Quotation is permitted provided the source is clearly stated. Full reproduction is prohibited.", privacy_admin_title: "Operator Information", privacy_admin_name: "Operator", privacy_admin_contact: "Contact", othersites_title: "Other Developed Sites", othersites_desc: "I have also developed an SI unit conversion tool that is useful in conjunction with this tool.", footer_copyright: "© 2025 Fitzy. All Rights Reserved."
+            }
+        };
+        
+        function setLanguage(lang) {
+            document.documentElement.lang = lang;
+            document.querySelectorAll('[data-translate]').forEach(el => {
+                const key = el.getAttribute('data-translate');
+                if (!el.hasAttribute('data-ja-default')) {
+                    el.setAttribute('data-ja-default', el.innerHTML);
+                }
+                if (lang === 'en' && translations.en[key]) {
+                    el.innerHTML = translations.en[key];
+                } else {
+                    el.innerHTML = el.getAttribute('data-ja-default');
+                }
+            });
+            document.getElementById('lang-ja').classList.toggle('active', lang === 'ja');
+            document.getElementById('lang-en').classList.toggle('active', lang === 'en');
+            localStorage.setItem('language', lang);
+        }
+        
+        function toggleNav() { document.getElementById("sidebar").classList.toggle('active'); }
+        document.getElementById('lang-ja').addEventListener('click', () => setLanguage('ja'));
+        document.getElementById('lang-en').addEventListener('click', () => setLanguage('en'));
+        const darkModeCheckbox = document.getElementById('dark-mode-checkbox');
+        if (localStorage.getItem('darkMode') === 'enabled') { document.body.classList.add('dark-mode'); darkModeCheckbox.checked = true; }
+        darkModeCheckbox.addEventListener('change', () => { document.body.classList.toggle('dark-mode'); localStorage.setItem('darkMode', document.body.classList.contains('dark-mode') ? 'enabled' : 'disabled'); });
+        
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', e => {
+                e.preventDefault();
+                const targetId = link.getAttribute('href').substring(1);
+                document.querySelectorAll('.page-section').forEach(section => { section.classList.remove('active'); });
+                document.getElementById(targetId).classList.add('active');
+                document.getElementById("sidebar").classList.remove('active');
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedLang = localStorage.getItem('language');
+            const browserLang = navigator.language.split('-')[0];
+            const lang = savedLang || (browserLang === 'ja' ? 'ja' : 'en');
+            setLanguage(lang);
+        });
+
+        const state = { r1: {}, r2: {}, p: {} };
+        async function fetchMolecularWeight(chemName) { if (!chemName) return null; try { const url = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${chemName}/property/MolecularWeight/JSON`; const response = await fetch(url); if (!response.ok) return null; const data = await response.json(); return parseFloat(data.PropertyTable.Properties[0].MolecularWeight); } catch (error) { return null; } }
+        function checkHazardAndSds(chemName, hazardId, sdsId) { const hazardEl = document.getElementById(hazardId); const sdsEl = document.getElementById(sdsId); if (!hazardEl || !sdsEl) return; const lowerCaseName = chemName.toLowerCase().trim(); hazardEl.textContent = HAZARDOUS_CHEMICALS.includes(lowerCaseName) ? '🔥' : ''; if(chemName) { sdsEl.textContent = '🔗'; sdsEl.href = `https://www.google.com/search?q=${encodeURIComponent(chemName)}+safety+data+sheet`; } else { sdsEl.textContent = ''; sdsEl.href = '#'; } }
+
+        function updateCalculations(inputType, reactantNum) {
+            ['r1', 'r2'].forEach(key => {
+                const r = state[key];
+                const rNum = parseInt(key.replace('r', ''));
+                const massEl = document.getElementById(`${key}-mass`);
+                const volEl = document.getElementById(`${key}-vol`);
+                r.density = parseFloat(document.getElementById(`${key}-density`).value) || null;
+                if (reactantNum === rNum) {
+                    if (inputType === 'mass') {
+                        r.mass = parseFloat(massEl.value) || null;
+                        if (r.mass && r.density) r.vol = r.mass / r.density;
+                        else if (!r.mass) r.vol = null;
+                    } else if (inputType === 'vol') {
+                        r.vol = parseFloat(volEl.value) || null;
+                        if (r.vol && r.density) r.mass = r.vol * r.density;
+                        else if (!r.vol) r.mass = null;
+                    }
+                }
+                if (r.mass && r.mw) r.moles = r.mass / r.mw; else r.moles = null;
+                if(document.activeElement !== massEl) massEl.value = r.mass !== null ? r.mass.toFixed(3) : '';
+                if(document.activeElement !== volEl) volEl.value = r.vol !== null ? r.vol.toFixed(3) : '';
+                document.getElementById(`${key}-moles`).textContent = r.moles ? r.moles.toFixed(4) : '';
+            });
+            const { r1, r2, p } = state;
+            const summaryBox = document.getElementById('calculation-summary');
+            const yieldEl = document.getElementById('p-yield');
+            ['r1-moles', 'r2-moles'].forEach(id => document.getElementById(id).classList.remove('limiting-reagent'));
+            summaryBox.textContent = '';
+            let theoreticalFromInput = parseFloat(yieldEl.value) || null;
+            if (r1.moles && r2.moles) {
+                let limitingMoles = 0, limitingReactantName = '';
+                if (r1.moles < r2.moles) { limitingMoles = r1.moles; limitingReactantName = '反応物 1'; document.getElementById('r1-moles').classList.add('limiting-reagent');
+                } else if (r2.moles < r1.moles) { limitingMoles = r2.moles; limitingReactantName = '反応物 2'; document.getElementById('r2-moles').classList.add('limiting-reagent');
+                } else { limitingMoles = r1.moles; limitingReactantName = '両方'; ['r1-moles', 'r2-moles'].forEach(id => document.getElementById(id).classList.add('limiting-reagent')); }
+                summaryBox.textContent = limitingReactantName === '両方' ? '反応は化学量論的に進行します (当量)' : `${limitingReactantName} が律速段階です`;
+                if (p.mw && limitingMoles > 0) {
+                    const calculatedYield = limitingMoles * p.mw;
+                    if (document.activeElement !== yieldEl) {
+                        yieldEl.value = calculatedYield.toFixed(3);
+                        theoreticalFromInput = calculatedYield;
+                    }
+                }
+            }
+            p.theoretical = theoreticalFromInput;
+            p.actual = parseFloat(document.getElementById('p-actual').value) || null;
+            if (p.actual && p.theoretical) { p.percentage = (p.actual / p.theoretical) * 100; document.getElementById('p-percentage').textContent = p.percentage.toFixed(2);
+            } else { document.getElementById('p-percentage').textContent = ''; }
+        }
+        function backCalculate() { const { r1, r2, p } = state; const desiredYield = parseFloat(document.getElementById('p-yield').value) || null; if (!desiredYield || !p.mw || !r1.mw || !r2.mw) return; const requiredMoles = desiredYield / p.mw; r1.mass = requiredMoles * r1.mw; r2.mass = requiredMoles * r2.mw; if (r1.density) r1.vol = r1.mass / r1.density; else r1.vol = null; if (r2.density) r2.vol = r2.mass / r2.density; else r2.vol = null; document.getElementById('r1-mass').value = r1.mass.toFixed(3); document.getElementById('r1-vol').value = r1.vol ? r1.vol.toFixed(3) : ''; document.getElementById('r2-mass').value = r2.mass.toFixed(3); document.getElementById('r2-vol').value = r2.vol ? r2.vol.toFixed(3) : ''; updateCalculations(); }
+        async function fetchAllData() {
+            const names = { r1: document.getElementById('r1-name').value.trim(), r2: document.getElementById('r2-name').value.trim(), p: document.getElementById('p-name').value.trim() };
+            const [mw1, mw2, mw_p] = await Promise.all([fetchMolecularWeight(names.r1), fetchMolecularWeight(names.r2), fetchMolecularWeight(names.p)]);
+            state.r1.mw = mw1; state.r2.mw = mw2; state.p.mw = mw_p;
+            document.getElementById('r1-mw').textContent = state.r1.mw ? state.r1.mw.toFixed(3) : '';
+            document.getElementById('r2-mw').textContent = state.r2.mw ? state.r2.mw.toFixed(3) : '';
+            document.getElementById('p-mw').textContent = state.p.mw ? state.p.mw.toFixed(3) : '';
+            if (document.getElementById('p-yield').value && document.activeElement !== document.getElementById('r1-mass') && document.activeElement !== document.getElementById('r1-vol') && document.activeElement !== document.getElementById('r2-mass') && document.activeElement !== document.getElementById('r2-vol')) { backCalculate(); } else { updateCalculations(); }
+        }
+        async function calculateMolarity() { const name = document.getElementById('m-name').value.trim(); const molarity = parseFloat(document.getElementById('m-molarity').value); const volume = parseFloat(document.getElementById('m-volume').value); const massBox = document.getElementById('m-mass'); if (!name || !molarity || !volume) { massBox.textContent = '未入力の項目があります'; return; } const mw = await fetchMolecularWeight(name); if (mw) { const mass = molarity * (volume / 1000) * mw; massBox.textContent = mass.toFixed(3); } else { massBox.textContent = '分子量を取得できません'; } }
+        function handleEnter(event, tool) { if (event.key === 'Enter') { event.preventDefault(); if (tool === 'molarity') calculateMolarity(); else fetchAllData(); } }
+        function clearMolarityFields() { document.getElementById('m-name').value = ''; document.getElementById('m-molarity').value = ''; document.getElementById('m-volume').value = ''; document.getElementById('m-mass').textContent = ''; document.getElementById('m-hazard').textContent = ''; const sdsEl = document.getElementById('m-sds'); sdsEl.textContent = ''; sdsEl.href = '#'; }
+        function clearStoichiometryFields() {
+            const inputs = document.querySelectorAll('#home .tool-section:first-child input[type="text"], #home .tool-section:first-child input[type="number"]');
+            const results = document.querySelectorAll('#home .tool-section:first-child .result-box');
+            inputs.forEach(input => input.value = '');
+            results.forEach(result => result.textContent = '');
+            Object.keys(state).forEach(key => { if(key !== 'p') Object.keys(state[key]).forEach(prop => { state[key][prop] = null; }); });
+            state.p = { mw: null, theoretical: null, actual: null, percentage: null };
+            ['r1', 'r2'].forEach(key => { document.getElementById(`${key}-hazard`).textContent = ''; const sdsEl = document.getElementById(`${key}-sds`); sdsEl.textContent = ''; sdsEl.href = '#'; });
+        }
+    </script>
+</body>
+</html>
